@@ -1,37 +1,30 @@
-####pacotes
+####libraries
 if (!require("pacman")) install.packages("pacman")
 pacman::p_load("tidyverse","data.table","latex2exp", "Cairo", "gamlss")
 
 
-
-
 #-------------------------------------------------------------------------------
-# #expressão da função densidade de probabilidade, necessária para obter numericamente as derivadas
+# #density
 # l_BSG <- expression(log(
 #   (1/sqrt(2*pi))*(1/(sigma*sqrt(mu)*(y^nu)))*(1-nu+((nu*mu)/y))*exp(-(1/(2*sigma^2))*(((y-mu)^2)/(mu*y^(2*nu))))
 # ))
 # 
-# ######derivadas em relação a cada parâmetro
-# #derivadas de primeira ordem
+# #first order derivates
 # m1 <- D(l_BSG, "mu")
 # s1 <- D(l_BSG, "sigma")
 # n1 <- D(l_BSG, "nu")
 # 
 # 
 # 
-# #derivadas de segunda ordem
+# #derivates
 # ms2 <- D(m1, "sigma") #igual a sm2
 # mn2 <- D(m1, "nu") #igual a nm2
 # sn2 <- D(s1, "nu") #igual ns2
 
 
 #------------------------------------------------------------------------------
-# Utilizando a distribuicao BSG de Owen no GAMLSS
 #
 
-#mu = mu = mediana
-#sigma = alpha
-#nu = kappa = relacionado com a correlação dos ciclos
 BSG <- function(mu.link = "log", sigma.link = "log", nu.link = "logit"){
   
   mstats <- checklink("mu.link", "BSG", substitute(mu.link),
@@ -45,7 +38,7 @@ BSG <- function(mu.link = "log", sigma.link = "log", nu.link = "logit"){
   
   
   structure(
-    list(family = c("BSG", "Birnbaum-Saunders Generalizada"),
+    list(family = c("GBS", "Generalized Birnbaum-Saunders"),
          parameters = list(mu=TRUE, sigma=TRUE, nu=TRUE),
          nopar = 3, 
          type = "Continuous",
@@ -63,7 +56,7 @@ BSG <- function(mu.link = "log", sigma.link = "log", nu.link = "logit"){
          nu.dr = vstats$mu.eta,
          
          
-         ######derivadas de primeira ordem
+         ######first order derivates
          dldm =  function(y,mu, sigma, nu){
            dldm = as.vector(attr(gamlss:::numeric.deriv(dBSG(y, mu, sigma, nu, log = TRUE), "mu", delta = 1e-04), "gradient"))
            dldm
@@ -80,7 +73,7 @@ BSG <- function(mu.link = "log", sigma.link = "log", nu.link = "logit"){
          },
          
          
-         #####derivadas de segunda ordem - mesmo parâmetro
+         #####second order derivates
          d2ldm2 = function(y,mu, sigma, nu) {
            dldm = as.vector(attr(gamlss:::numeric.deriv(dBSG(y, mu, sigma, nu, log = TRUE), "mu", delta = 1e-04), "gradient"))
            #sapply(seq_along(y), function(i) {
@@ -88,7 +81,7 @@ BSG <- function(mu.link = "log", sigma.link = "log", nu.link = "logit"){
            #func = function(par) dBGEV(y[i], mu = par, sigma = sigma[i], nu = nu[i], tau = tau[i], log = TRUE),
            #x = mu[i]
            #)
-           #hess[1, 1]  # segunda derivada em relação a mu
+           #hess[1, 1]  # 
            #})
            d2ldm2 = -dldm^2
            d2ldm2
@@ -106,7 +99,7 @@ BSG <- function(mu.link = "log", sigma.link = "log", nu.link = "logit"){
            d2ldv2
          }, 
          
-         #####derivadas de segunda ordem - parâmetro cruzados
+        
          d2ldmdd = function(y,mu, sigma, nu) {
            dldm = as.vector(attr(gamlss:::numeric.deriv(dBSG(y, mu, sigma, nu, log = TRUE), "mu", delta = 1e-04), "gradient"))
            dldd = as.vector(attr(gamlss:::numeric.deriv(dBSG(y, mu, sigma, nu, log = TRUE), "sigma", delta = 1e-04), "gradient"))
@@ -138,12 +131,12 @@ BSG <- function(mu.link = "log", sigma.link = "log", nu.link = "logit"){
          G.dev.incr = function(y,mu,sigma,nu, ...) -2*dBSG(y = y, mu = mu, sigma = sigma , nu = nu, log=TRUE),
          rqres = expression(rqres(pfun="pBSG", type = "Continuous", y=y, mu=mu, sigma=sigma, nu=nu)),
          
-         #####valores inicias para mu e alpha
+         #####initial values mu, sigma and nu
          mu.initial = expression(mu <-  rep(median(y),length(y))),
          sigma.initial = expression(sigma <- rep(1,length(y))),
          nu.initial = expression(nu <- rep(0.5, length(y))),
          
-         #####restrição ao domínio dos parâmetros e da v.a
+         #####restriction on the domain of the parameters and the random variable   
          mu.valid = function(mu) all(is.finite(mu) &  mu > 0) ,
          #sigma.valid = function(sigma) all(is.finite(sigma) & (sigma > 0 & sigma < 2)),
          sigma.valid = function(sigma) all(is.finite(sigma) & (sigma > 0)),
@@ -153,15 +146,7 @@ BSG <- function(mu.link = "log", sigma.link = "log", nu.link = "logit"){
     class = c("gamlss.family","family"))
 }
 
-
-
-
-
-
-
-
 #-------------------------------------------------------------------------------
-# fdp da distribuicao BSG - OK!
 dBSG<-function(y, mu=1, sigma=1, nu = 0.5, log=FALSE){
   if (any(mu <= 0)) stop(paste("mu must be positive", "\n", ""))
   if (any(sigma <= 0)) stop(paste("sigma must be positive", "\n", ""))
@@ -177,14 +162,7 @@ dBSG<-function(y, mu=1, sigma=1, nu = 0.5, log=FALSE){
   return(fy)
 }
 
-
-
-
-
-
-
 #-------------------------------------------------------------------------------
-# fda da distribuicao BS - OK!
 pBSG <- function(q, mu=1, sigma=1, nu=0.5, lower.tail = TRUE, log = FALSE){
   if (any(mu <= 0)) stop(paste("mu must be positive", "\n", ""))
   if (any(sigma <= 0)) stop(paste("sigma must be positive", "\n", ""))
@@ -203,7 +181,7 @@ pBSG <- function(q, mu=1, sigma=1, nu=0.5, lower.tail = TRUE, log = FALSE){
 }
 
 #-------------------------------------------------------------------------------
-#função quantílica 
+
 qBSG <- function(p, mu=1, sigma=1, nu = 0.5, lower.tail = TRUE, log = FALSE){
   if (any(mu <= 0)) stop(paste("mu must be positive", "\n", ""))
   if (any(sigma <= 0)) stop(paste("sigma must be positive", "\n", ""))
@@ -229,7 +207,7 @@ qBSG <- function(p, mu=1, sigma=1, nu = 0.5, lower.tail = TRUE, log = FALSE){
 
 
 #-------------------------------------------------------------------------------
-#gerador de números aleatórios
+
 rBSG <- function(n, mu = 1, sigma = 1, nu = 0.5){
   if (any(mu <= 0)) stop(paste("mu must be positive", "\n", ""))
   if (any(sigma <= 0)) stop(paste("sigma must be positive", "\n", ""))
@@ -239,7 +217,6 @@ rBSG <- function(n, mu = 1, sigma = 1, nu = 0.5){
   
   y <- numeric(0)
   
-  # Gerando amostras GBS de tamanho n
   for(i in 1:n) 
   {
     z <-  rnorm(1)
@@ -250,6 +227,3 @@ rBSG <- function(n, mu = 1, sigma = 1, nu = 0.5){
   
   return(y)
 }
-
-
-
