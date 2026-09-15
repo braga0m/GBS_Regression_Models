@@ -1,6 +1,6 @@
-# R codes and dataset for the paper "On a new generalized Birnbaum-Saunders regression model"  
+# R codes and dataset for the paper "A New Generalized Birnbaum-Saunders Regression Model: Inference, Diagnostics and Application"  
 
-This repository contains R scripts and datasets used in the application and simulations presented in the paper "On a new generalized Birnbaum-Saunders regression model" by Milhomem, Ribeiro, Barros and Santos (2026).
+This repository contains R scripts and datasets used in the application and simulations presented in the paper "A New Generalized Birnbaum-Saunders Regression Model: Inference, Diagnostics and Application" by Milhomem, Ribeiro, Barros and Santos (2026).
 
 ### Application  
 The directory Application includes the dataset and the R scripts to replicate the results presented in the application section of the paper.  
